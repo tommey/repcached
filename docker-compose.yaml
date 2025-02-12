@@ -1,0 +1,20 @@
+services:
+  repcached:
+    image: ${IMAGE}
+    platform: linux/amd64
+    init: true
+    environment:
+      REPCACHED_PAIR: repcached2
+    ports:
+      - 21211:11211
+      - 21212:11212
+
+  repcached2:
+    image: ${IMAGE}
+    platform: linux/amd64
+    init: true
+    environment:
+      REPCACHED_PAIR: repcached
+    ports:
+      - 31211:11211
+      - 31212:11212
