@@ -151,6 +151,12 @@ enum conn_states {
     conn_swallow,    /**< swallowing unnecessary bytes w/o storing */
     conn_closing,    /**< closing this connection */
     conn_mwrite,     /**< writing out many items sequentially */
+#ifdef USE_REPLICATION
+    conn_repconnect, /**< replication connecting to master */
+    conn_rep_listen, /**< replication listening socket */
+    conn_pipe_recv,  /**< replication command pipe recv */
+    conn_pipe_send,  /**< replication command pipe send */
+#endif /* USE_REPLICATION */
     conn_max_state   /**< Max state value (used for assertion) */
 };
 
@@ -303,6 +309,11 @@ struct settings {
     bool slab_reassign;     /* Whether or not slab reassignment is allowed */
     bool slab_automove;     /* Whether or not to automatically move slabs */
     int hashpower_init;     /* Starting hash power level */
+#ifdef USE_REPLICATION
+    struct in_addr rep_addr;    /* replication addr */
+    int rep_port;               /* replication port */
+    int rep_qmax;               /* replication QITEM max */
+#endif /*USE_REPLICATION*/
 };
 
 extern struct stats stats;
@@ -316,6 +327,10 @@ extern struct settings settings;
 #define ITEM_SLABBED 4
 
 #define ITEM_FETCHED 8
+
+#ifdef USE_REPLICATION
+#define ITEM_REPDATA 128
+#endif /*USE_REPLICATION*/
 
 /**
  * Structure for storing items within memcached.
@@ -498,6 +513,10 @@ static inline int mutex_lock(pthread_mutex_t *mutex)
 #include "trace.h"
 #include "hash.h"
 #include "util.h"
+
+#ifdef USE_REPLICATION
+#include "replication.h"
+#endif /* USE_REPLICATION */
 
 /*
  * Functions such as the libevent-related calls that need to do cross-thread

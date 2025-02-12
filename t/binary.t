@@ -2,10 +2,12 @@
 
 use strict;
 use warnings;
-use Test::More tests => 3539;
+use Test::More;
 use FindBin qw($Bin);
 use lib "$Bin/lib";
 use MemcachedTest;
+
+Test::More::plan(tests => 3539 + (support_replication() ? 36 : 0));
 
 my $server = new_memcached();
 ok($server, "started the server");

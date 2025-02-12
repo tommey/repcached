@@ -141,6 +141,9 @@ item *do_item_alloc(char *key, const size_t nkey, const int flags, const rel_tim
             STATS_LOCK();
             stats.evictions++;
             STATS_UNLOCK();
+#ifdef USE_REPLICATION
+            replication_call_del(ITEM_key(search), search->nkey);
+#endif /* USE_REPLICATION */
             it = search;
             slabs_adjust_mem_requested(it->slabs_clsid, ITEM_ntotal(it), ntotal);
             do_item_unlink_nolock(it, hash(ITEM_key(it), it->nkey, 0));
@@ -283,8 +286,14 @@ int do_item_link(item *it, const uint32_t hv) {
     stats.total_items += 1;
     STATS_UNLOCK();
 
+#ifdef USE_REPLICATION
+    /* Allocate a new CAS ID on link. */
+    if(!(it->it_flags & ITEM_REPDATA))
+        ITEM_set_cas(it, (settings.use_cas) ? get_cas_id() : 0);
+#else
     /* Allocate a new CAS ID on link. */
     ITEM_set_cas(it, (settings.use_cas) ? get_cas_id() : 0);
+#endif /* USE_REPLICATION */
     assoc_insert(it, hv);
     item_link_q(it);
     refcount_incr(&it->refcount);

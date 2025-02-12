@@ -31,6 +31,10 @@ if ENABLE_SASL
 memcached_SOURCES += sasl_defs.c
 endif
 
+if ENABLE_REPLICATION
+memcached_SOURCES += replication.h replication.c
+endif
+
 memcached_debug_SOURCES = $(memcached_SOURCES)
 memcached_CPPFLAGS = -DNDEBUG
 memcached_debug_LDADD = @PROFILER_LDFLAGS@

@@ -13,7 +13,8 @@ my $builddir = getcwd;
 
 
 @EXPORT = qw(new_memcached sleep mem_get_is mem_gets mem_gets_is mem_stats
-             supports_sasl free_port);
+             supports_sasl free_port support_replication memcached_version
+             version2num);
 
 sub sleep {
     my $n = shift;
@@ -148,6 +149,23 @@ sub supports_sasl {
     return 0;
 }
 
+sub support_replication {
+    my $output = `$builddir/memcached-debug -h`;
+    return 1 if $output =~ /^-x <ip_addr>/m;
+    return 0;
+}
+
+sub memcached_version {
+    my $output = `$builddir/memcached-debug -h`;
+    return $1 if $output =~ /^memcached (\d[\d\.]+)/;
+    return 0;
+}
+
+sub version2num {
+    my($major,$minor,$pl) = ($_[0] =~ /^(\d+)\.(\d+)\.(\d+)$/);
+    return $major*100**2 + $minor*100 + $pl
+}
+
 sub new_memcached {
     my ($args, $passed_port) = @_;
     my $port = $passed_port || free_port();
@@ -171,6 +189,9 @@ sub new_memcached {
     }
     if ($< == 0) {
         $args .= " -u root";
+    }
+    if (support_replication() && $args !~ m/-X/) {
+        $args .= ' -X 0';
     }
 
     my $childpid = fork();
